@@ -8,6 +8,27 @@ SYSTEM_PROMPT = (
     "Combine relevant snippets if multiple are retrieved. Prefer short, clear answers."
 )
 
+DECOMPOSITION_PROMPT = """You are a helpful assistant that takes a user's question and breaks it down into a list of simple, self-contained sub-questions.
+These sub-questions will be used to retrieve relevant documents.
+Each sub-question should be a complete, standalone question.
+Provide the sub-questions as a JSON list of strings.
+
+Example:
+User question: "who founded R41? and where was it founded? do you think a begginer like me can survive and adapt in R41? and learn a lot of new things?"
+Your output:
+{{
+    "questions": [
+        "Who founded the R41 club?",
+        "Where was the R41 club founded?",
+        "Can a beginner join the R41 club?",
+        "What can a member learn in the R41 club?"
+    ]
+}}
+
+User question: "{question}"
+Your output:
+"""
+
 # The user-facing template that receives the question and the retrieved context.
 # {question} and {context} are filled by the chain.
 USER_PROMPT = (

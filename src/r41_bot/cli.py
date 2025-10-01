@@ -10,9 +10,10 @@ def main():
 
     def answer(q):
         # 1) fuzzy direct hit (no LLM cost)
-        a = try_fastpath(q, threshold=85)
-        if a:
-            return a
+        if len(q.split()) < 10:
+            a = try_fastpath(q, threshold=85)
+            if a:
+                return a
         # 2) RAG; if the retriever returned no context, chain will see empty context.
         ans = chain.invoke(q)
         # small post-guard: if LLM says it doesn’t know but we *do* have a close FAQ, relax threshold
