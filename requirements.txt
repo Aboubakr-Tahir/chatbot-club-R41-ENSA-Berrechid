@@ -1,0 +1,11 @@
+langchain
+langchain-community
+langchain-openai
+langgraph
+chromadb
+python-dotenv
+langchain-google-genai
+langchain-chroma
+fastembed
+rapidfuzz
+rank_bm25
