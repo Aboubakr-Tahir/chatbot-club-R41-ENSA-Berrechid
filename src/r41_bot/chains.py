@@ -4,6 +4,7 @@ from langchain.schema.runnable import RunnableLambda,RunnablePassthrough
 from langchain.schema.output_parser import StrOutputParser
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
+from prompts import ROUTER_PROMPT
 
 
 from prompts import SYSTEM_PROMPT, USER_PROMPT, DECOMPOSITION_PROMPT
@@ -90,3 +91,15 @@ def build_decomposition_chain():
     decomposition_chain = prompt | llm | JsonOutputParser()
     
     return decomposition_chain
+
+
+def build_router_chain():
+    """
+    Builds a chain that classifies a user's question into one of three routes.
+    """
+    llm = get_llm()
+    prompt = PromptTemplate.from_template(ROUTER_PROMPT)
+
+    router_chain = prompt | llm | JsonOutputParser()
+
+    return router_chain

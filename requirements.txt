@@ -9,3 +9,5 @@ langchain-chroma
 fastembed
 rapidfuzz
 rank_bm25
+unstructured
+unstructured[md]

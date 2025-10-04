@@ -38,3 +38,38 @@ USER_PROMPT = (
     "- If the context is insufficient, say you don't have this info yet.\n"
     "- Keep the answer brief and clear.\n"
 )
+
+ROUTER_PROMPT = """You are an expert at routing a user's question.
+You must determine if the question is about the R41 ENSAB club or if it is irrelevant.
+
+Based on the user's question, you must classify it into one of two categories: `vector_search` or `irrelevant`.
+- Use `vector_search` for any question related to the R41 club.
+- Use `irrelevant` for any question that is off-topic or has nothing to do with the club.
+
+Return a JSON object with a single key "route" and the chosen category as the value.
+
+--- EXAMPLES ---
+
+User question: "What is R41?"
+Your output:
+{{
+    "route": "vector_search"
+}}
+
+User question: "who was the president in 2023 and what events did the club do that year?"
+Your output:
+{{
+    "route": "vector_search"
+}}
+
+User question: "What is the capital of France?"
+Your output:
+{{
+    "route": "irrelevant"
+}}
+
+--- END OF EXAMPLES ---
+
+User question: "{question}"
+Your output:
+"""

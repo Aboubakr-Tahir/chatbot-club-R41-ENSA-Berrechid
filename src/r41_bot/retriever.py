@@ -1,33 +1,42 @@
-import os, csv
+import csv
 from langchain.docstore.document import Document
+from langchain.retrievers import EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever
 from langchain_chroma import Chroma
 from langchain_community.embeddings import FastEmbedEmbeddings
-from langchain_community.retrievers import BM25Retriever
-from langchain.retrievers import EnsembleRetriever
-from config import VECTOR_DIR
+from langchain_community.document_loaders import DirectoryLoader
 
-def _load_csv_docs():
-    # repo root -> data/faq.csv
-    root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    path = os.path.join(root, "data", "faq.csv")
-    docs = []
-    with open(path, encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            q, a = row["question"].strip(), row["answer"].strip()
-            docs.append(Document(page_content=f"Q: {q}\nA: {a}", metadata={"source": "faq", "q": q}))
-    return docs
+from config import VECTOR_DIR, EMBEDDING_MODEL
 
-def get_vectorstore():
-    emb = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")  # or multilingual-e5-small later
-    return Chroma(persist_directory=VECTOR_DIR, embedding_function=emb)
+KNOWLEDGE_BASE_DIR = "data/knowledge_base"
 
-def get_retriever(k: int = 8):
-    # Vector retriever (MMR for diversity)
-    vec = get_vectorstore().as_retriever(
-    search_type="mmr",
-    search_kwargs={"k": k, "fetch_k": 24, "lambda_mult": 0.5},
-)
-    # Keyword retriever (no downloads, robust to typos/short queries)
-    bm25 = BM25Retriever.from_documents(_load_csv_docs()); bm25.k = k
-    # Ensemble (tune weights if needed)
-    return EnsembleRetriever(retrievers=[vec, bm25], weights=[0.6, 0.4])
+def _load_markdown_docs():
+    """Loads all markdown documents from the knowledge base directory."""
+    loader = DirectoryLoader(KNOWLEDGE_BASE_DIR, glob="**/*.md")
+    documents = loader.load()
+    return documents
+
+def get_retriever(k: int):
+    """
+    Builds an ensemble retriever combining semantic and keyword search.
+    """
+    # Initialize the embedding model for the vector store
+    embedding = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
+    
+    # Initialize the Chroma vector store retriever
+    vectorstore = Chroma(persist_directory=VECTOR_DIR, embedding_function=embedding)
+    vs_retriever = vectorstore.as_retriever(search_kwargs={"k": k})
+
+    # Load documents for the keyword retriever
+    markdown_docs = _load_markdown_docs()
+
+    # Initialize the BM25 keyword retriever
+    bm25_retriever = BM25Retriever.from_documents(markdown_docs)
+    bm25_retriever.k = k
+
+    # Initialize the ensemble retriever
+    ensemble_retriever = EnsembleRetriever(
+        retrievers=[vs_retriever, bm25_retriever], weights=[0.5, 0.5]
+    )
+
+    return ensemble_retriever
