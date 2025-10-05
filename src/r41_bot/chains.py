@@ -1,13 +1,12 @@
 from operator import itemgetter 
-from langchain.prompts import ChatPromptTemplate, PromptTemplate
+from langchain.prompts import ChatPromptTemplate, PromptTemplate, MessagesPlaceholder
 from langchain.schema.runnable import RunnableLambda,RunnablePassthrough
 from langchain.schema.output_parser import StrOutputParser
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
-from prompts import ROUTER_PROMPT
 
 
-from prompts import SYSTEM_PROMPT, USER_PROMPT, DECOMPOSITION_PROMPT
+from prompts import SYSTEM_PROMPT, USER_PROMPT, DECOMPOSITION_PROMPT , ROUTER_PROMPT , QUERY_REWRITER_PROMPT
 from config import MODEL_NAME, GOOGLE_API_KEY
 
 
@@ -34,44 +33,34 @@ def format_context(docs_list: list) -> str:
 def build_rag_chain(retriever):
     """
     Builds the main RAG chain with a decomposition step.
+    This chain is now memory-aware.
     """
     llm = get_llm()
     decomposition_chain = build_decomposition_chain()
 
-    # 1. The main input is the original question
-    # 2. We pass it to the decomposition chain to get sub-questions
-    # 3. We also keep the original question using RunnablePassthrough
-    decomposed_step = {
-        "sub_questions": decomposition_chain,
-        "original_question": RunnablePassthrough(),
-    }
-
-    # 4. We retrieve documents for each sub-question
-    # 5. We format the retrieved documents into a single context string
-    retrieval_step = {
-        "context": itemgetter("sub_questions")
-        | RunnableLambda(lambda x: x.get("questions", [])) # Extract the list of questions
-        | retriever.map() # Run retriever for each question in the list
-        | RunnableLambda(format_context), # Combine and format the context
-        "question": itemgetter("original_question"),
-    }
-
-
-    # 6. We build the final prompt for the LLM
+    # We build the final prompt for the LLM, now including a placeholder for memory
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", SYSTEM_PROMPT),
+            MessagesPlaceholder(variable_name="chat_history"),
             ("human", USER_PROMPT),
         ]
     )
 
-    # 7. We combine everything into the final chain
+    # The full chain is defined as a single sequence
     rag_chain = (
-        decomposed_step
-        | RunnablePassthrough.assign(
-            context=retrieval_step["context"],
-            question=retrieval_step["question"],
+        # Step 1: Decompose the question and pass along the original input
+        RunnablePassthrough.assign(
+            sub_questions=itemgetter("question") | decomposition_chain
         )
+        # Step 2: Use the output of Step 1 to retrieve context
+        | RunnablePassthrough.assign(
+            context=itemgetter("sub_questions")
+            | RunnableLambda(lambda x: x.get("questions", []))
+            | retriever.map()
+            | RunnableLambda(format_context)
+        )
+        # Step 3: Use the context and original question to generate an answer
         | prompt
         | llm
         | StrOutputParser()
@@ -103,3 +92,16 @@ def build_router_chain():
     router_chain = prompt | llm | JsonOutputParser()
 
     return router_chain
+
+
+def build_query_rewriter_chain():
+    """
+    Builds a chain that rewrites a user's question to include temporal context.
+    """
+    llm = get_llm()
+    prompt = PromptTemplate.from_template(QUERY_REWRITER_PROMPT)
+
+    # We don't use a JSON parser here because we expect a simple string output
+    rewriter_chain = prompt | llm | StrOutputParser()
+
+    return rewriter_chain

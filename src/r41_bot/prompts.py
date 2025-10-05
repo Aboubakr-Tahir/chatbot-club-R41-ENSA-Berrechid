@@ -1,3 +1,25 @@
+from datetime import datetime
+
+# Get current date
+now = datetime.now()
+
+# Format the current date as "Month Day, Year" (e.g., "October 5, 2025")
+current_date_str = now.strftime("%B %d, %Y")
+
+# Determine academic year: if month is before September, academic year started last year
+if now.month < 9:
+    academic_year_start = now.year - 1
+else:
+    academic_year_start = now.year
+current_academic_year = f"{academic_year_start}-{academic_year_start + 1}"
+previous_academic_year = f"{academic_year_start - 1}-{academic_year_start}"
+
+
+
+
+
+
+
 # System and user prompts for the R41 ENSAB chatbot.
 
 # High-level behavior for the model
@@ -72,4 +94,51 @@ Your output:
 
 User question: "{question}"
 Your output:
+"""
+
+
+# New prompt for rewriting the query with temporal context
+QUERY_REWRITER_PROMPT = f"""You are an expert at rewriting a user's question to be more specific and easier for a vector database search.
+The user is asking questions about the R41 ENSAB club.
+
+The current date is {current_date_str}.
+The current academic year is {current_academic_year}.
+The previous academic year was {previous_academic_year}.
+
+Your task is to rewrite the user's question by replacing relative time-based terms (like "current", "this year", "last year") with specific academic years.
+
+**IMPORTANT RULES:**
+1. If the question does NOT contain any relative time-based terms, return the original question UNCHANGED.
+2. If the input is a simple greeting, conversational filler, or not a real question, return it UNCHANGED.
+
+--- EXAMPLES ---
+
+# Example of temporal rewriting
+Original question: "who is the current president?"
+Rewritten question: "who is the president for the {current_academic_year} academic year?"
+
+# Example of temporal rewriting
+Original question: "what events happened last year?"
+Rewritten question: "what events happened in the {previous_academic_year} academic year?"
+
+# Example of no rewriting needed (no temporal words)
+Original question: "who was the founder of the club?"
+Rewritten question: "who was the founder of the club?"
+
+# Example of no rewriting needed (short, valid question)
+Original question: "what is R41"
+Rewritten question: "what is R41"
+
+# Example of no rewriting needed (greeting)
+Original question: "hello"
+Rewritten question: "hello"
+
+# Example of no rewriting needed (conversational filler)
+Original question: "thanks that's helpful"
+Rewritten question: "thanks that's helpful"
+
+--- END OF EXAMPLES ---
+
+Original question: "{{question}}"
+Rewritten question:
 """
