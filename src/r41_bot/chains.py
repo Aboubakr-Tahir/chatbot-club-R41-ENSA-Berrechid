@@ -6,8 +6,8 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 
-from prompts import SYSTEM_PROMPT, USER_PROMPT, DECOMPOSITION_PROMPT , ROUTER_PROMPT , QUERY_REWRITER_PROMPT
-from config import MODEL_NAME, GOOGLE_API_KEY
+from .prompts import SYSTEM_PROMPT, USER_PROMPT, DECOMPOSITION_PROMPT , ROUTER_PROMPT , QUERY_REWRITER_PROMPT
+from .config import MODEL_NAME, GOOGLE_API_KEY
 
 
 def get_llm():

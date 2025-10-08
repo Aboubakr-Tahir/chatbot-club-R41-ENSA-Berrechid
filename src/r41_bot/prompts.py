@@ -137,6 +137,9 @@ Rewritten question: "hello"
 Original question: "thanks that's helpful"
 Rewritten question: "thanks that's helpful"
 
+[Rewritten Question: cest quoi le centre d'interet de ce club]
+[Routing to: Vector Search (RAG)]
+
 --- END OF EXAMPLES ---
 
 Original question: "{{question}}"

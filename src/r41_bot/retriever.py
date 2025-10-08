@@ -6,7 +6,7 @@ from langchain_chroma import Chroma
 from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain_community.document_loaders import DirectoryLoader
 
-from config import VECTOR_DIR, EMBEDDING_MODEL
+from .config import VECTOR_DIR, EMBEDDING_MODEL
 
 KNOWLEDGE_BASE_DIR = "data/knowledge_base"
 
