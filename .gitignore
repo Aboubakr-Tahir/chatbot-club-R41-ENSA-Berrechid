@@ -1,40 +1,19 @@
-# Environment variables
-# Keep secret keys and other sensitive information out of version control.
-.env
-.env.*
+# filepath: c:\Users\PC\Desktop\projects\chat bot R41\frontend\.gitignore
+# Dependencies
+/node_modules
 
-# Vector Store
-# This is generated locally by the ingest script and can be large.
-.chroma/
-
-# Python
-# Caches, bytecode files, and virtual environments.
-__pycache__/
-*.py[cod]
-*$py.class
-.venv/
-venv/
-env/
-ENV/
-
-# IDE / Editor specific files
-.vscode/
-.idea/
-*.sublime-workspace
-
-# Operating System files
-.DS_Store
-Thumbs.db
-
-# Testing artifacts
-.pytest_cache/
-htmlcov/
-.coverage
-
-# Build artifacts
-build/
-dist/
-*.egg-info/
+# Build output
+/dist
 
 # Log files
-*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE config
+.vscode/

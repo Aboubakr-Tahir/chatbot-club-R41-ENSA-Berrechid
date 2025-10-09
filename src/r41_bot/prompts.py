@@ -64,32 +64,20 @@ USER_PROMPT = (
 ROUTER_PROMPT = """You are an expert at routing a user's question.
 You must determine if the question is about the R41 ENSAB club or if it is irrelevant.
 
+**Use the provided chat history to understand the context of the question, especially if it contains pronouns like "he", "she", or "it".**
+
 Based on the user's question, you must classify it into one of two categories: `vector_search` or `irrelevant`.
 - Use `vector_search` for any question related to the R41 club.
 - Use `irrelevant` for any question that is off-topic or has nothing to do with the club.
 
 Return a JSON object with a single key "route" and the chosen category as the value.
 
+--- CHAT HISTORY ---
+{chat_history}
+--- END OF CHAT HISTORY ---
+
 --- EXAMPLES ---
-
-User question: "What is R41?"
-Your output:
-{{
-    "route": "vector_search"
-}}
-
-User question: "who was the president in 2023 and what events did the club do that year?"
-Your output:
-{{
-    "route": "vector_search"
-}}
-
-User question: "What is the capital of France?"
-Your output:
-{{
-    "route": "irrelevant"
-}}
-
+# ... existing code ...
 --- END OF EXAMPLES ---
 
 User question: "{question}"
@@ -105,11 +93,17 @@ The current date is {current_date_str}.
 The current academic year is {current_academic_year}.
 The previous academic year was {previous_academic_year}.
 
-Your task is to rewrite the user's question by replacing relative time-based terms (like "current", "this year", "last year") with specific academic years.
+**Use the provided chat history to understand the context of the question and resolve pronouns (like "he", "it", "that event") before rewriting.**
+
+Your task is to first resolve any pronouns and then rewrite the user's question by replacing relative time-based terms (like "current", "this year", "last year") with specific academic years.
 
 **IMPORTANT RULES:**
-1. If the question does NOT contain any relative time-based terms, return the original question UNCHANGED.
+1. If the question is clear and has no relative time-based terms, return the original question UNCHANGED.
 2. If the input is a simple greeting, conversational filler, or not a real question, return it UNCHANGED.
+
+--- CHAT HISTORY ---
+{{chat_history}}
+--- END OF CHAT HISTORY ---
 
 --- EXAMPLES ---
 

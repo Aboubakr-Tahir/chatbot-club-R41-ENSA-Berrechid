@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>R41 Chatbot</title>
+    <!-- 1. ADD THE MARKED.JS LIBRARY FROM A CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
       body {
         font-family: sans-serif;
@@ -48,27 +50,15 @@
         color: black;
         align-self: flex-start;
       }
-      #input-form {
-        display: flex;
-        padding: 10px;
+      /* Add some basic styling for lists and bold text */
+      .bot ul,
+      .bot ol {
+        padding-left: 20px;
+        margin-top: 5px;
+        margin-bottom: 5px;
       }
-      #input-form input {
-        flex-grow: 1;
-        border: 1px solid #ccc;
-        border-radius: 18px;
-        padding: 10px;
-        font-size: 16px;
-      }
-      #input-form button {
-        border: none;
-        background-color: #0084ff;
-        color: white;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        margin-left: 10px;
-        cursor: pointer;
-        font-size: 20px;
+      .bot li {
+        margin-bottom: 4px;
       }
     </style>
   </head>
@@ -97,15 +87,12 @@
         const question = input.value.trim();
         if (!question) return;
 
-        // 1. Display user's message
         addMessage(question, "user");
         input.value = "";
 
-        // 2. Create a placeholder for the bot's response
         const botMessageDiv = addMessage("", "bot");
 
         try {
-          // 3. Send request to the FastAPI backend
           const response = await fetch("/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -115,7 +102,6 @@
           if (!response.ok)
             throw new Error(`HTTP error! status: ${response.status}`);
 
-          // 4. Process the streaming response
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
           let fullResponse = "";
@@ -126,11 +112,13 @@
 
             const chunk = decoder.decode(value);
             fullResponse += chunk;
-            botMessageDiv.textContent = fullResponse; // Update the bot message div in real-time
-            messages.scrollTop = messages.scrollHeight; // Auto-scroll
+
+            // 2. USE marked.parse() AND .innerHTML TO RENDER THE MARKDOWN
+            botMessageDiv.innerHTML = marked.parse(fullResponse);
+
+            messages.scrollTop = messages.scrollHeight;
           }
 
-          // 5. Update chat history
           chatHistory.push({ role: "human", content: question });
           chatHistory.push({ role: "ai", content: fullResponse });
         } catch (error) {
@@ -142,7 +130,10 @@
       function addMessage(text, sender) {
         const messageDiv = document.createElement("div");
         messageDiv.className = `message ${sender}`;
-        messageDiv.textContent = text;
+        // For the user message, we still use textContent for security
+        if (sender === "user") {
+          messageDiv.textContent = text;
+        }
         messages.appendChild(messageDiv);
         messages.scrollTop = messages.scrollHeight;
         return messageDiv;

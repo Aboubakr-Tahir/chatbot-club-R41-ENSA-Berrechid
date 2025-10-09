@@ -1,7 +1,12 @@
 import sys
 from langchain.memory import ConversationBufferMemory
-from retriever import get_retriever
-from chains import build_rag_chain, build_router_chain, build_query_rewriter_chain
+from .retriever import get_retriever
+from .chains import build_rag_chain, build_router_chain, build_query_rewriter_chain
+import langchain
+
+# ADD THESE TWO LINES TO ENABLE VERBOSE LOGGING
+langchain.debug = True
+langchain.verbose = True
 
 def main():
     retriever = get_retriever(k=6)
@@ -13,12 +18,12 @@ def main():
     memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
 
     def answer(q, chat_history):
-        # First, rewrite the question to add temporal context
-        rewritten_q = rewriter_chain.invoke({"question": q})
+        # First, rewrite the question, now WITH history
+        rewritten_q = rewriter_chain.invoke({"question": q, "chat_history": chat_history})
         print(f"[Rewritten Question: {rewritten_q}]") # For debugging
 
-        # Then, use the router on the rewritten question
-        route_decision = router_chain.invoke({"question": rewritten_q})
+        # Then, use the router on the rewritten question, also WITH history
+        route_decision = router_chain.invoke({"question": rewritten_q, "chat_history": chat_history})
         route = route_decision.get("route")
 
         # Path 1: The question is irrelevant
@@ -54,7 +59,9 @@ def main():
         ans = answer(q, chat_history)
 
         # 4. Save the original question and answer to memory for the next turn
-        memory.save_context({"question": q}, {"answer": ans})
+        # *** THE FIX IS HERE ***
+        # Use the default keys 'input' and 'output' for ConversationBufferMemory
+        memory.save_context({"input": q}, {"output": ans})
         
         print(ans)
 
